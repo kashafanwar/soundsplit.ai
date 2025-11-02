@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>soundsplit.ai — Unmix Anything</title>
+  <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/3844/3844724.png">
+
+  <!-- <link rel="icon" type="image/png" href="favicon.png" /> -->
+  <!-- 
+    💡 NOTE:
+    - Place your favicon image in the same folder as this HTML file.
+    - Name it: favicon.png
+    - Recommended size: 512×512 or 256×256 transparent PNG.
+    - You can also use .ico or .svg if you prefer.
+  -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+
+  <style>
+    * {margin: 0; padding: 0; box-sizing: border-box;}
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: "Poppins", sans-serif;
+      color: white;
+      overflow-x: hidden;
+      background: radial-gradient(circle at 20% 30%, #0a0a1a, #000);
+    }
+    canvas {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0;
+    }
+    header {
+      position: fixed;
+      top: 0; left: 0; width: 100%;
+      padding: 1rem 4rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(0,0,0,0.3);
+      backdrop-filter: blur(10px);
+      z-index: 10;
+    }
+    header h1 { font-size: 1.5rem; letter-spacing: 1px; }
+
+    nav { display: flex; align-items: center; }
+    nav a {
+      margin-left: 1.5rem;
+      text-decoration: none;
+      color: white;
+      font-weight: 500;
+      transition: color 0.3s;
+    }
+    nav a:hover { color: #00ffff; }
+
+    /* === Hamburger Icon === */
+    .menu-toggle {
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      width: 32px;
+      height: 28px;
+      z-index: 100;
+    }
+    .menu-toggle span {
+      width: 100%;
+      height: 3.5px;
+      background-color: #ffffff;
+      margin: 4px 0;
+      border-radius: 2px;
+      box-shadow: 0 0 6px rgba(255, 255, 255, 0.8);
+      transition: all 0.3s ease;
+    }
+
+    @media (max-width: 768px) {
+      .menu-toggle { display: flex; }
+      nav {
+        display: none;
+        flex-direction: column;
+        position: absolute;
+        top: 70px;
+        right: 20px;
+        background: rgba(0, 0, 0, 0.8);
+        padding: 1rem 2rem;
+        border-radius: 12px;
+        backdrop-filter: blur(15px);
+      }
+      nav.active {
+        display: flex;
+        animation: fadeIn 0.4s ease forwards;
+      }
+      nav a {
+        margin: 0.8rem 0;
+        font-size: 1.1rem;
+      }
+      header { padding: 1rem 1.5rem; }
+    }
+
+    @keyframes fadeIn {
+      from {opacity: 0; transform: translateY(-10px);}
+      to {opacity: 1; transform: translateY(0);}
+    }
+
+    section {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      position: relative;
+      z-index: 2;
+      padding: 6rem 2rem;
+    }
+
+    /* === HOME === */
+    #home h2 {
+      font-size: 3rem;
+      font-weight: 700;
+      background: linear-gradient(90deg, #00ffff, #ff00ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    #home p { margin-top: 1rem; font-size: 1.2rem; color: #ccc; }
+    .upload-btn {
+      margin-top: 2rem;
+      padding: 1rem 2rem;
+      border: none;
+      border-radius: 50px;
+      background: linear-gradient(90deg, #00ffff, #ff00ff);
+      color: white;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.3s;
+    }
+    .upload-btn:hover { transform: scale(1.05); }
+
+    .youtube-box {
+      margin-top: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 50px;
+      padding: 0.5rem 1rem;
+      width: 300px;
+      transition: box-shadow 0.3s;
+    }
+    .youtube-box:hover {
+      box-shadow: 0 0 15px rgba(0,255,255,0.4);
+    }
+    .youtube-box input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: white;
+      font-size: 1rem;
+      padding-left: 0.5rem;
+    }
+    .youtube-icon {
+      font-size: 1.4rem;
+      color: #ff0000;
+      filter: drop-shadow(0 0 5px #ff0000);
+    }
+
+    /* === HOW IT WORKS === */
+    #how .steps {
+      display: flex; flex-wrap: wrap; gap: 2rem; justify-content: center; margin-top: 2rem;
+    }
+    .step {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 1rem;
+      padding: 2rem;
+      width: 250px;
+      backdrop-filter: blur(15px);
+      transition: transform 0.4s, opacity 0.6s;
+    }
+    .step:hover { transform: translateY(-10px); }
+    .step h3 { color: #00ffff; margin-bottom: 1rem; }
+
+    /* === PRICING === */
+    #pricing .cards {
+      display: flex; flex-wrap: wrap; gap: 2rem; justify-content: center; margin-top: 2rem;
+    }
+    .price-card {
+      border-radius: 1rem;
+      padding: 2rem;
+      width: 250px;
+      border: 2px solid transparent;
+      background: linear-gradient(#111,#111) padding-box,
+                  linear-gradient(90deg,#00ffff,#ff00ff) border-box;
+      transition: transform 0.4s;
+    }
+    .price-card:hover { transform: translateY(-10px); }
+    .price-card h3 { margin-bottom: 1rem; color: #00ffff; }
+    .price-card p { color: #ccc; }
+
+    /* === REVIEWS === */
+    #reviews .reviews {
+      display: flex; flex-wrap: wrap; gap: 2rem; justify-content: center; margin-top: 2rem;
+    }
+    .review {
+      background: rgba(255,255,255,0.08);
+      border-radius: 1rem;
+      padding: 2rem;
+      width: 280px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 0 20px rgba(0,255,255,0.1);
+    }
+    .review p { font-style: italic; color: #ccc; }
+    .review span { display: block; margin-top: 1rem; font-weight: 600; color: #00ffff; }
+
+    footer {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+      padding: 2rem 0;
+      color: #888;
+      background: rgba(0,0,0,0.4);
+    }
+  </style>
+</head>
+<body>
+  <canvas id="bg"></canvas>
+
+  <header>
+    <h1>soundsplit.ai</h1>
+    <div class="menu-toggle" id="menu-toggle">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+    <nav id="nav-menu">
+      <a href="#home">Home</a>
+      <a href="#how">How It Works</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#reviews">Reviews</a>
+      <a href="#">Sign In</a>
+    </nav>
+  </header>
+
+  <!-- === PAGE 1: HOME === -->
+  <section id="home">
+    <h2>Upload Anything. Unmix Everything.</h2>
+    <p>AI-powered stem separation — vocals, drums, bass & more.</p>
+    <button class="upload-btn">Drag or Upload Your File</button>
+    <div class="youtube-box">
+      <i class="youtube-icon">▶</i>
+      <input type="text" placeholder="Paste YouTube link..." />
+    </div>
+  </section>
+
+  <!-- === PAGE 2: HOW IT WORKS === -->
+  <section id="how">
+    <h2>How It Works</h2>
+    <div class="steps">
+      <div class="step"><h3>1. Upload</h3><p>Drop any audio, video, or YouTube link.</p></div>
+      <div class="step"><h3>2. AI Processing</h3><p>Our AI splits vocals, drums, and instruments.</p></div>
+      <div class="step"><h3>3. Preview</h3><p>Listen, adjust levels, and export your stems.</p></div>
+      <div class="step"><h3>4. Remix</h3><p>Use stems in your DAW or share directly.</p></div>
+    </div>
+  </section>
+
+  <!-- === PAGE 3: PRICING === -->
+  <section id="pricing">
+    <h2>Pricing</h2>
+    <div class="cards">
+      <div class="price-card">
+        <h3>Free</h3>
+        <p>• 5 uploads/day<br>• Basic stem separation</p>
+      </div>
+      <div class="price-card">
+        <h3>Pro</h3>
+        <p>• Unlimited uploads<br>• $10/month<br>• High-quality exports</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- === PAGE 4: REVIEWS === -->
+  <section id="reviews">
+    <h2>User Reviews</h2>
+    <div class="reviews">
+      <div class="review">
+        <p>“This is magic! Separated vocals perfectly in seconds.”</p>
+        <span>– Sarah L., Producer</span>
+      </div>
+      <div class="review">
+        <p>“The best stem splitter I've used. Super clean interface.”</p>
+        <span>– Alex M., DJ</span>
+      </div>
+      <div class="review">
+        <p>“AI quality is insane. Great for remixing old tracks.”</p>
+        <span>– David R., Musician</span>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    © 2025 soundsplit.ai — All Rights Reserved.
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script>
+    const menuToggle = document.getElementById('menu-toggle');
+    const navMenu = document.getElementById('nav-menu');
+    menuToggle.addEventListener('click', () => {
+      navMenu.classList.toggle('active');
+    });
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById("bg"), alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    camera.position.z = 5;
+
+    const geometry = new THREE.TorusKnotGeometry(1, 0.3, 120, 16);
+    const material = new THREE.MeshStandardMaterial({
+      color: 0x00ffff,
+      emissive: 0x111111,
+      metalness: 0.8,
+      roughness: 0.3
+    });
+    const knot = new THREE.Mesh(geometry, material);
+    scene.add(knot);
+
+    const particlesGeometry = new THREE.BufferGeometry();
+    const particlesCount = 2500;
+    const posArray = new Float32Array(particlesCount * 3);
+    for (let i = 0; i < particlesCount * 3; i++) {
+      posArray[i] = (Math.random() - 0.5) * 30;
+    }
+    particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+    const particlesMaterial = new THREE.PointsMaterial({
+      size: 0.02,
+      color: 0xffffff,
+      transparent: true,
+      opacity: 0.8
+    });
+    const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
+    scene.add(particlesMesh);
+
+    const pointLight = new THREE.PointLight(0xffffff, 1);
+    pointLight.position.set(5, 5, 5);
+    scene.add(pointLight);
+
+    let mouseX = 0, mouseY = 0, targetX = 0, targetY = 0;
+    document.addEventListener('mousemove', (e) => {
+      mouseX = (e.clientX / window.innerWidth) * 2 - 1;
+      mouseY = (e.clientY / window.innerHeight) * 2 - 1;
+    });
+
+    const clock = new THREE.Clock();
+    function animate() {
+      const elapsedTime = clock.getElapsedTime();
+      targetX += (mouseX - targetX) * 0.05;
+      targetY += (mouseY - targetY) * 0.05;
+
+      knot.rotation.x = elapsedTime * 0.3;
+      knot.rotation.y = elapsedTime * 0.4;
+      knot.position.y = Math.sin(elapsedTime * 0.5) * 0.2;
+      particlesMesh.rotation.y += 0.0005;
+
+      camera.position.x += (targetX * 2 - camera.position.x) * 0.05;
+      camera.position.y += (-targetY * 2 - camera.position.y) * 0.05;
+      camera.position.z = 5 + window.scrollY * 0.002;
+
+      camera.lookAt(scene.position);
+      renderer.render(scene, camera);
+      requestAnimationFrame(animate);
+    }
+    animate();
+
+    window.addEventListener("resize", () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  </script>
+</body>
+</html
